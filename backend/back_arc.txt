@@ -1,0 +1,423 @@
+# Создание проекта маркетплейса: пошагово
+
+## Шаг 1: Создание структуры проекта
+
+Создайте основную папку и структуру:
+
+```bash
+mkdir marketplace
+cd marketplace
+
+# Создаем структуру папок
+mkdir backend frontend
+
+# Backend структура
+cd backend
+mkdir app
+mkdir app/api app/core app/models app/schemas
+touch app/__init__.py app/main.py app/config.py app/database.py
+touch app/api/__init__.py app/core/__init__.py app/models/__init__.py app/schemas/__init__.py
+
+cd ..
+```
+
+## Шаг 2: Настройка Backend (FastAPI)
+
+### Создание виртуального окружения
+```bash
+cd backend
+python -m venv .venv
+
+# Активация (Windows PowerShell)
+.\.venv\Scripts\Activate.ps1
+
+# Активация (Windows CMD)
+.venv\Scripts\activate.bat
+
+# Активация (Linux/Mac)
+source .venv/bin/activate
+```
+
+### Установка зависимостей
+```bash
+pip install fastapi uvicorn sqlalchemy psycopg2-binary alembic python-jose[cryptography] passlib[bcrypt] python-multipart
+pip freeze > requirements.txt
+```
+
+### Создание .env файла
+```bash
+# .env
+DATABASE_URL=postgresql://postgres:password@localhost:5432/marketplace
+SECRET_KEY=your-secret-key-here-change-in-production
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+```
+
+## Шаг 3: Базовые файлы Backend
+
+### `app/config.py`
+```python
+import os
+from pydantic_settings import BaseSettings
+
+class Settings(BaseSettings):
+    database_url: str = os.getenv("DATABASE_URL", "postgresql://postgres:password@localhost:5432/marketplace")
+    secret_key: str = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
+    algorithm: str = os.getenv("ALGORITHM", "HS256")
+    access_token_expire_minutes: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+    
+    class Config:
+        env_file = ".env"
+
+settings = Settings()
+```
+
+### `app/database.py`
+```python
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from app.config import settings
+
+engine = create_engine(settings.database_url)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+Base = declarative_base()
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+```
+
+### `app/main.py`
+```python
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI(
+    title="Marketplace API",
+    description="API для маркетплейса",
+    version="1.0.0"
+)
+
+# Настройка CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # React dev server
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.get("/")
+async def root():
+    return {"message": "Marketplace API is running!"}
+
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+```
+
+## Шаг 4: Первые модели
+
+### `app/models/user.py`
+```python
+from sqlalchemy import Column, Integer, String, DateTime, Enum
+from sqlalchemy.orm import relationship
+from datetime import datetime
+import enum
+from app.database import Base
+
+class UserRole(str, enum.Enum):
+    BUYER = "buyer"
+    SELLER = "seller"
+    ADMIN = "admin"
+
+class User(Base):
+    __tablename__ = "users"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=False)
+    first_name = Column(String, nullable=True)
+    last_name = Column(String, nullable=True)
+    role = Column(Enum(UserRole), default=UserRole.BUYER)
+    is_active = Column(String, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Отношения
+    products = relationship("Product", back_populates="seller")
+    orders = relationship("Order", back_populates="buyer")
+```
+
+### `app/models/__init__.py`
+```python
+from app.models.user import User
+
+__all__ = ["User"]
+```
+
+## Шаг 5: Базовые схемы (Pydantic)
+
+### `app/schemas/user.py`
+```python
+from pydantic import BaseModel, EmailStr
+from typing import Optional
+from datetime import datetime
+from app.models.user import UserRole
+
+class UserBase(BaseModel):
+    email: EmailStr
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    role: UserRole = UserRole.BUYER
+
+class UserCreate(UserBase):
+    password: str
+
+class UserResponse(UserBase):
+    id: int
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    email: Optional[str] = None
+```
+
+## Шаг 6: Система аутентификации
+
+### `app/core/security.py`
+```python
+from datetime import datetime, timedelta
+from typing import Union, Any
+from jose import jwt, JWTError
+from passlib.context import CryptContext
+from app.config import settings
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def create_access_token(subject: Union[str, Any], expires_delta: timedelta = None) -> str:
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=settings.access_token_expire_minutes)
+    
+    to_encode = {"exp": expire, "sub": str(subject)}
+    encoded_jwt = jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
+    return encoded_jwt
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password: str) -> str:
+    return pwd_context.hash(password)
+
+def verify_token(token: str) -> Union[str, None]:
+    try:
+        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+        email: str = payload.get("sub")
+        if email is None:
+            return None
+        return email
+    except JWTError:
+        return None
+```
+
+## Шаг 7: Первый API роут
+
+### `app/api/auth.py`
+```python
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from sqlalchemy.orm import Session
+from datetime import timedelta
+
+from app.database import get_db
+from app.models.user import User
+from app.schemas.user import UserCreate, UserResponse, Token
+from app.core.security import verify_password, get_password_hash, create_access_token, verify_token
+from app.config import settings
+
+router = APIRouter()
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
+
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    
+    email = verify_token(token)
+    if email is None:
+        raise credentials_exception
+    
+    user = db.query(User).filter(User.email == email).first()
+    if user is None:
+        raise credentials_exception
+    
+    return user
+
+@router.post("/register", response_model=UserResponse)
+async def register(user: UserCreate, db: Session = Depends(get_db)):
+    # Проверяем, существует ли пользователь
+    existing_user = db.query(User).filter(User.email == user.email).first()
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        )
+    
+    # Создаем нового пользователя
+    hashed_password = get_password_hash(user.password)
+    db_user = User(
+        email=user.email,
+        hashed_password=hashed_password,
+        first_name=user.first_name,
+        last_name=user.last_name,
+        role=user.role
+    )
+    
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    
+    return db_user
+
+@router.post("/login", response_model=Token)
+async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == form_data.username).first()
+    
+    if not user or not verify_password(form_data.password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
+    access_token = create_access_token(subject=user.email, expires_delta=access_token_expires)
+    
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@router.get("/me", response_model=UserResponse)
+async def read_users_me(current_user: User = Depends(get_current_user)):
+    return current_user
+```
+
+## Шаг 8: Обновляем main.py
+
+```python
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.database import engine, Base
+from app.api import auth
+
+# Создаем таблицы
+Base.metadata.create_all(bind=engine)
+
+app = FastAPI(
+    title="Marketplace API",
+    description="API для маркетплейса",
+    version="1.0.0"
+)
+
+# Настройка CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Подключаем роуты
+app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
+
+@app.get("/")
+async def root():
+    return {"message": "Marketplace API is running!"}
+
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+```
+
+## Шаг 9: Настройка PostgreSQL
+
+### Если PostgreSQL не установлен:
+1. Скачайте с официального сайта: https://www.postgresql.org/download/
+2. Или используйте Docker:
+
+```bash
+docker run --name marketplace-postgres \
+  -e POSTGRES_DB=marketplace \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=password \
+  -p 5432:5432 \
+  -d postgres:14
+```
+
+### Создание базы данных:
+```sql
+-- Подключитесь к PostgreSQL и выполните:
+CREATE DATABASE marketplace;
+```
+
+## Шаг 10: Запуск и тестирование
+
+```bash
+# В папке backend с активированным виртуальным окружением
+python -m uvicorn app.main:app --reload
+
+# Или
+python app/main.py
+```
+
+Откройте браузер и перейдите на:
+- http://localhost:8000 - основная страница
+- http://localhost:8000/docs - Swagger документация
+- http://localhost:8000/health - проверка здоровья
+
+## Что у нас есть на данный момент:
+
+✅ Настроенная структура проекта  
+✅ FastAPI приложение  
+✅ Подключение к PostgreSQL  
+✅ Система аутентификации с JWT  
+✅ Регистрация и авторизация пользователей  
+✅ Модель пользователя  
+✅ API документация  
+
+## Следующие шаги:
+1. Добавить модели для товаров и категорий
+2. Создать API для управления товарами
+3. Настроить фронтенд на React
+4. Добавить загрузку изображений
+
+Готовы продолжить?
