@@ -3,8 +3,10 @@ from datetime import datetime, timedelta
 from typing import Union, Any
 from jose import jwt, JWTError
 from passlib.context import CryptContext
+from app.config import settings
 
-SECRET_KEY = "Petya9644"  # В продакшене используйте более сложный ключ
+
+SECRET_KEY = settings.secret_key
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 

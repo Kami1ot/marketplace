@@ -83,9 +83,9 @@ app.include_router(
 @app.on_event("startup")
 async def startup_event():
     # Импортируем ВСЕ модели здесь
-    from app.models.user import User, UserRole
+    from app.models.user import User
+    from app.models.product import Product  
     from app.models.category import Category
-    from app.models.product import Product
     
     # Создаем все таблицы
     Base.metadata.create_all(bind=engine)
