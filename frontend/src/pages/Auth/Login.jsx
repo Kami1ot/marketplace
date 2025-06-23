@@ -1,7 +1,7 @@
-// src/pages/Auth/Login.jsx
+// src/pages/Auth/Login.jsx - Улучшенная версия с правильной разметкой
 import { useState } from 'react';
-import { Card, Form, Input, Button, Typography, Alert, Row, Col, message } from 'antd';
-import { UserOutlined, LockOutlined, LoginOutlined } from '@ant-design/icons';
+import { Card, Form, Input, Button, Typography, Alert, Row, Col, message, Divider } from 'antd';
+import { UserOutlined, LockOutlined, LoginOutlined, ShopOutlined } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { authService } from '../../services/authService';
 
@@ -19,17 +19,14 @@ const Login = () => {
 
     try {
       const result = await authService.login({
-        email: values.username, // В форме поле называется username для совместимости с Ant Design
+        email: values.username,
         password: values.password
       });
 
       message.success('Успешная авторизация!');
       console.log('Авторизован пользователь:', result.user);
       
-      // Перенаправляем на главную страницу
       navigate('/');
-      
-      // Перезагружаем страницу для обновления состояния навигации
       window.location.reload();
       
     } catch (error) {
@@ -41,58 +38,70 @@ const Login = () => {
   };
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center',
-      background: '#f0f2f5',
-      padding: '20px'
-    }}>
-      <Row justify="center" style={{ width: '100%' }}>
-        <Col xs={24} sm={16} md={12} lg={8} xl={6}>
-          <Card style={{ padding: '24px' }}>
+      <Row justify="center" align="middle" style={{ width: '100%'}}>
+        <Col xs={22} sm={16} md={12} lg={10} xl={8}>
+          <Card 
+            style={{ 
+              padding: '32px',
+              borderRadius: '16px',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+              border: 'none',
+              marginBottom: '200px'
+            }}
+          >
+            {/* Заголовок */}
             <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-              <Title level={2} style={{ color: '#1890ff', marginBottom: '8px' }}>
-                🛒 Вход в Маркетплейс
+              <div style={{ 
+                fontSize: '36px', 
+                marginBottom: '12px',
+                background: 'linear-gradient(45deg, #1890ff, #52c41a)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent'
+              }}>
+                🛒
+              </div>
+              <Title level={3} style={{ margin: 0, color: '#262626', fontSize: '20px' }}>
+                Вход в Маркетплейс
               </Title>
-              <Text type="secondary">
+              <Text type="secondary" style={{ fontSize: '14px' }}>
                 Войдите в свой аккаунт для продолжения
               </Text>
             </div>
 
+            {/* Ошибка */}
             {error && (
               <Alert
                 message="Ошибка авторизации"
                 description={error}
                 type="error"
                 showIcon
-                style={{ marginBottom: '24px' }}
+                style={{ marginBottom: '24px', borderRadius: '8px' }}
                 closable
                 onClose={() => setError(null)}
               />
             )}
 
+            {/* Форма */}
             <Form
               form={form}
               name="login"
               onFinish={onFinish}
               autoComplete="off"
-              size="large"
               layout="vertical"
             >
               <Form.Item
                 name="username"
-                label="Email"
+                label="Email адрес"
                 rules={[
                   { required: true, message: 'Введите email!' },
                   { type: 'email', message: 'Введите корректный email!' }
                 ]}
               >
                 <Input 
-                  prefix={<UserOutlined />} 
+                  prefix={<UserOutlined style={{ color: '#bfbfbf' }} />} 
                   placeholder="your@email.com"
                   autoComplete="username"
+                  style={{ borderRadius: '6px', padding: '8px 12px' }}
                 />
               </Form.Item>
 
@@ -102,49 +111,83 @@ const Login = () => {
                 rules={[{ required: true, message: 'Введите пароль!' }]}
               >
                 <Input.Password
-                  prefix={<LockOutlined />}
+                  prefix={<LockOutlined style={{ color: '#bfbfbf' }} />}
                   placeholder="Ваш пароль"
                   autoComplete="current-password"
+                  style={{ borderRadius: '6px', padding: '8px 12px' }}
                 />
               </Form.Item>
 
-              <Form.Item style={{ marginBottom: '16px' }}>
+              <Form.Item style={{ marginBottom: '20px', marginTop: '24px' }}>
                 <Button 
                   type="primary" 
                   htmlType="submit" 
                   block 
                   icon={<LoginOutlined />}
                   loading={loading}
+                  style={{ 
+                    height: '40px',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    background: 'linear-gradient(45deg, #1890ff, #40a9ff)',
+                    border: 'none'
+                  }}
                 >
-                  {loading ? 'Вход...' : 'Войти'}
+                  {loading ? 'Вход...' : 'Войти в систему'}
                 </Button>
               </Form.Item>
             </Form>
 
-            <div style={{ textAlign: 'center' }}>
-              <Text type="secondary">
-                Нет аккаунта? <Link to="/register" style={{ color: '#1890ff' }}>Зарегистрироваться</Link>
+            <Divider style={{ margin: '20px 0' }}>
+              <Text type="secondary" style={{ fontSize: '12px' }}>или</Text>
+            </Divider>
+
+            {/* Ссылка на регистрацию */}
+            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+              <Text type="secondary" style={{ fontSize: '14px' }}>
+                Нет аккаунта? 
               </Text>
+              <br />
+              <Link to="/register">
+                <Button 
+                  type="link" 
+                  style={{ 
+                    fontSize: '14px', 
+                    fontWeight: '500',
+                    padding: '4px 0',
+                    height: 'auto'
+                  }}
+                >
+                  Создать новый аккаунт
+                </Button>
+              </Link>
             </div>
 
-            {/* Демо данные для тестирования */}
-            <div style={{ 
-              marginTop: '24px', 
-              padding: '16px', 
-              background: '#f9f9f9', 
-              borderRadius: '6px' 
-            }}>
-              <Text strong>Для тестирования:</Text><br/>
-              <Text type="secondary" style={{ fontSize: '12px' }}>
-                Admin: admin@marketplace.com / admin123<br/>
-                Business: business@test.com / password<br/>
-                User: user@test.com / password
-              </Text>
-            </div>
+            {/* Демо данные */}
+            <Card 
+              size="small"
+              style={{ 
+                background: '#f9f9f9', 
+                border: '1px solid #e8e8e8',
+                borderRadius: '6px'
+              }}
+            >
+              <div style={{ textAlign: 'center' }}>
+                <Text strong style={{ color: '#595959', fontSize: '13px' }}>
+                  <ShopOutlined style={{ marginRight: '6px' }} />
+                  Тестовые аккаунты
+                </Text>
+                <div style={{ marginTop: '8px', fontSize: '12px', color: '#8c8c8c' }}>
+                  <div><strong>Admin:</strong> admin@marketplace.com / admin123</div>
+                  <div><strong>Business:</strong> business@test.com / password</div>
+                  <div><strong>User:</strong> user@test.com / password</div>
+                </div>
+              </div>
+            </Card>
           </Card>
         </Col>
       </Row>
-    </div>
   );
 };
 

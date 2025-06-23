@@ -1,7 +1,7 @@
-// src/pages/Auth/Register.jsx
+// src/pages/Auth/Register.jsx - Улучшенная версия с правильной разметкой
 import { useState } from 'react';
-import { Card, Form, Input, Button, Typography, Alert, Row, Col, message } from 'antd';
-import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
+import { Card, Form, Input, Button, Typography, Alert, Row, Col, message, Divider, Steps } from 'antd';
+import { UserOutlined, LockOutlined, MailOutlined, SafetyOutlined, UserAddOutlined } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { authService } from '../../services/authService';
 
@@ -40,61 +40,95 @@ const Register = () => {
   };
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center',
-      background: '#f0f2f5',
-      padding: '20px'
-    }}>
-      <Row justify="center" style={{ width: '100%' }}>
-        <Col xs={24} sm={20} md={16} lg={12} xl={8}>
-          <Card style={{ padding: '24px' }}>
-            <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-              <Title level={2} style={{ color: '#1890ff', marginBottom: '8px' }}>
-                📝 Регистрация
+      <Row justify="center" align="middle" style={{ width: '100%', minHeight: '100vh' }}>
+        <Col xs={22} sm={18} md={14} lg={12} xl={10}>
+          <Card 
+            style={{ 
+              borderRadius: '16px',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+              border: 'none'
+            }}
+          >
+            {/* Заголовок */}
+            <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+              <div style={{ 
+                fontSize: '32px', 
+                marginBottom: '16px',
+                background: 'linear-gradient(45deg, #52c41a, #1890ff)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent'
+              }}>
+                📝
+              </div>
+              <Title level={2} style={{ margin: 0, color: '#262626', fontSize: '24px' }}>
+                Создание аккаунта
               </Title>
-              <Text type="secondary">
-                Создайте аккаунт для покупки и продажи товаров
+              <Text type="secondary" style={{ fontSize: '14px' }}>
+                Присоединяйтесь к нашему маркетплейсу
               </Text>
             </div>
 
+            {/* Шаги регистрации */}
+            <Steps
+              size="small"
+              current={0}
+              style={{ marginBottom: '32px' }}
+              items={[
+                {
+                  title: 'Данные',
+                  icon: <UserOutlined />
+                },
+                {
+                  title: 'Безопасность',
+                  icon: <SafetyOutlined />
+                },
+                {
+                  title: 'Готово',
+                  icon: <UserAddOutlined />
+                }
+              ]}
+            />
+
+            {/* Ошибка */}
             {error && (
               <Alert
                 message="Ошибка регистрации"
                 description={error}
                 type="error"
                 showIcon
-                style={{ marginBottom: '24px' }}
+                style={{ marginBottom: '24px', borderRadius: '8px' }}
                 closable
                 onClose={() => setError(null)}
               />
             )}
 
+            {/* Форма */}
             <Form
               form={form}
               name="register"
               onFinish={onFinish}
               autoComplete="off"
-              size="large"
+              size="medium"
               layout="vertical"
             >
+              {/* Email */}
               <Form.Item
                 name="email"
-                label="Email"
+                label="Email адрес"
                 rules={[
                   { required: true, message: 'Введите email!' },
                   { type: 'email', message: 'Введите корректный email!' }
                 ]}
               >
                 <Input 
-                  prefix={<MailOutlined />} 
+                  prefix={<MailOutlined style={{ color: '#bfbfbf' }} />} 
                   placeholder="your@email.com"
                   autoComplete="email"
+                  style={{ borderRadius: '8px', padding: '12px 16px' }}
                 />
               </Form.Item>
 
+              {/* Имя и фамилия */}
               <Row gutter={16}>
                 <Col span={12}>
                   <Form.Item
@@ -106,9 +140,10 @@ const Register = () => {
                     ]}
                   >
                     <Input 
-                      prefix={<UserOutlined />} 
+                      prefix={<UserOutlined style={{ color: '#bfbfbf' }} />} 
                       placeholder="Ваше имя"
                       autoComplete="given-name"
+                      style={{ borderRadius: '8px', padding: '12px 16px' }}
                     />
                   </Form.Item>
                 </Col>
@@ -122,14 +157,16 @@ const Register = () => {
                     ]}
                   >
                     <Input 
-                      prefix={<UserOutlined />} 
+                      prefix={<UserOutlined style={{ color: '#bfbfbf' }} />} 
                       placeholder="Ваша фамилия"
                       autoComplete="family-name"
+                      style={{ borderRadius: '8px', padding: '12px 16px' }}
                     />
                   </Form.Item>
                 </Col>
               </Row>
 
+              {/* Пароль */}
               <Form.Item
                 name="password"
                 label="Пароль"
@@ -137,18 +174,22 @@ const Register = () => {
                   { required: true, message: 'Введите пароль!' },
                   { min: 6, message: 'Пароль должен быть не менее 6 символов!' }
                 ]}
+                hasFeedback
               >
                 <Input.Password
-                  prefix={<LockOutlined />}
+                  prefix={<LockOutlined style={{ color: '#bfbfbf' }} />}
                   placeholder="Минимум 6 символов"
                   autoComplete="new-password"
+                  style={{ borderRadius: '8px', padding: '12px 16px' }}
                 />
               </Form.Item>
 
+              {/* Подтверждение пароля */}
               <Form.Item
                 name="confirm_password"
                 label="Подтверждение пароля"
                 dependencies={['password']}
+                hasFeedback
                 rules={[
                   { required: true, message: 'Подтвердите пароль!' },
                   ({ getFieldValue }) => ({
@@ -162,47 +203,82 @@ const Register = () => {
                 ]}
               >
                 <Input.Password
-                  prefix={<LockOutlined />}
+                  prefix={<LockOutlined style={{ color: '#bfbfbf' }} />}
                   placeholder="Повторите пароль"
                   autoComplete="new-password"
+                  style={{ borderRadius: '8px', padding: '12px 16px' }}
                 />
               </Form.Item>
 
-              <Form.Item style={{ marginBottom: '16px' }}>
+              {/* Кнопка регистрации */}
+              <Form.Item style={{ marginBottom: '24px', marginTop: '32px' }}>
                 <Button 
                   type="primary" 
                   htmlType="submit" 
                   block
                   loading={loading}
+                  style={{ 
+                    height: '48px',
+                    borderRadius: '8px',
+                    fontSize: '16px',
+                    fontWeight: '500',
+                    background: 'linear-gradient(45deg, #52c41a, #73d13d)',
+                    border: 'none'
+                  }}
                 >
-                  {loading ? 'Регистрация...' : 'Зарегистрироваться'}
+                  {loading ? 'Создание аккаунта...' : 'Зарегистрироваться'}
                 </Button>
               </Form.Item>
             </Form>
 
-            <div style={{ textAlign: 'center' }}>
+            <Divider style={{ margin: '24px 0' }}>
+              <Text type="secondary">или</Text>
+            </Divider>
+
+            {/* Ссылка на вход */}
+            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
               <Text type="secondary">
-                Уже есть аккаунт? <Link to="/login" style={{ color: '#1890ff' }}>Войти</Link>
+                Уже есть аккаунт? 
               </Text>
+              <br />
+              <Link to="/login">
+                <Button 
+                  type="link" 
+                  style={{ 
+                    fontSize: '16px', 
+                    fontWeight: '500',
+                    padding: '4px 0',
+                    height: 'auto'
+                  }}
+                >
+                  Войти в систему
+                </Button>
+              </Link>
             </div>
 
-            <div style={{ 
-              marginTop: '24px', 
-              padding: '16px', 
-              background: '#f9f9f9', 
-              borderRadius: '6px' 
-            }}>
-              <Text strong>Информация:</Text><br/>
-              <Text type="secondary" style={{ fontSize: '12px' }}>
-                • Обычные пользователи могут просматривать товары<br/>
-                • Для продажи товаров нужен бизнес-аккаунт<br/>
-                • Обратитесь к админу для повышения роли
-              </Text>
-            </div>
+            {/* Информация о ролях */}
+            <Card 
+              size="small"
+              style={{ 
+                background: '#f6ffed', 
+                border: '1px solid #b7eb8f',
+                borderRadius: '8px'
+              }}
+            >
+              <div style={{ textAlign: 'center' }}>
+                <Text strong style={{ color: '#389e0d' }}>
+                  ℹ️ Информация о ролях
+                </Text>
+                <div style={{ marginTop: '12px', fontSize: '13px', color: '#52c41a' }}>
+                  <div>👤 <strong>USER:</strong> Просмотр и покупка товаров</div>
+                  <div>🏢 <strong>BUSINESS:</strong> Продажа товаров (обратитесь к админу)</div>
+                  <div>👑 <strong>ADMIN:</strong> Полное управление платформой</div>
+                </div>
+              </div>
+            </Card>
           </Card>
         </Col>
       </Row>
-    </div>
   );
 };
 

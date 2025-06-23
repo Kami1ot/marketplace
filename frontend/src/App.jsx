@@ -132,7 +132,7 @@ const Navigation = () => {
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'space-between',
-          maxWidth: '1200px',
+          maxWidth: '1600px',
           margin: '0 auto',
           flexWrap: 'wrap',
           gap: '16px'
@@ -251,12 +251,12 @@ function App() {
         
         <Content style={{ padding: '24px' }}>
           <div style={{ 
-            maxWidth: '1200px', 
+            maxWidth: '1600px', 
             margin: '0 auto',
             background: '#fff', 
             padding: '32px', 
             borderRadius: '8px',
-            minHeight: 'calc(100vh - 200px)',
+            minHeight: 'calc(100vh - 100px)',
             boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
           }}>
             <Routes>
