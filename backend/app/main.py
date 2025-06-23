@@ -99,20 +99,22 @@ async def startup_event():
     db = SessionLocal()
     
     try:
+        # Импортируем UserRole для проверки роли
+        from app.models.user import UserRole
         # Проверяем есть ли админ
         admin = db.query(User).filter(User.role == UserRole.ADMIN).first()
         if not admin:
             # Создаем первого админа
             admin_user = User(
-                email="admin@marketplace.com",
-                hashed_password=get_password_hash("admin123"),
-                first_name="Super",
-                last_name="Admin",
+                email="petr.a.ovchinnikov@gmail.com",
+                hashed_password=get_password_hash("Petya9644"),
+                first_name="Petr",
+                last_name="Ovchinnikov",
                 role=UserRole.ADMIN
             )
             db.add(admin_user)
             db.commit()
-            print("👑 Создан суперадмин: admin@marketplace.com / admin123")
+            print("👑 Создан суперадмин: petr.a.ovchinnikov@gmail.com / Petya9644")
         else:
             print("👑 Суперадмин уже существует")
     except Exception as e:
