@@ -1,12 +1,14 @@
-// src/App.jsx - рабочая версия с подключенной авторизацией
+// src/App.jsx - исправленная версия без дублирования
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { Button, Typography, Card, Space, Layout, Row, Col } from 'antd';
 import { HomeOutlined, ShopOutlined, UserOutlined, LoginOutlined, LogoutOutlined } from '@ant-design/icons';
 import { useState, useEffect } from 'react';
 
-// Импорты страниц из отдельных файлов
+// Импорты страниц
 import Login from './pages/Auth/Login';
 import Register from './pages/Auth/Register';
+import ProductsPage from './pages/Products/ProductsPage';
+import ProfilePage from './pages/Profile/ProfilePage';
 import { authService } from './services/authService';
 
 const { Title, Text } = Typography;
@@ -26,6 +28,11 @@ const HomePage = () => (
           <ShopOutlined style={{ fontSize: '48px', color: '#1890ff', marginBottom: '16px' }} />
           <Title level={4}>Покупать товары</Title>
           <Text>Тысячи товаров от проверенных продавцов</Text>
+          <div style={{ marginTop: '16px' }}>
+            <Link to="/products">
+              <Button type="primary">Открыть каталог</Button>
+            </Link>
+          </div>
         </Card>
       </Col>
       <Col xs={24} sm={12} md={8}>
@@ -33,6 +40,13 @@ const HomePage = () => (
           <UserOutlined style={{ fontSize: '48px', color: '#52c41a', marginBottom: '16px' }} />
           <Title level={4}>Продавать товары</Title>
           <Text>Начните свой бизнес уже сегодня</Text>
+          <div style={{ marginTop: '16px' }}>
+            <Link to="/profile">
+              <Button type="primary" style={{ background: '#52c41a', borderColor: '#52c41a' }}>
+                Мой профиль
+              </Button>
+            </Link>
+          </div>
         </Card>
       </Col>
       <Col xs={24} sm={12} md={8}>
@@ -40,63 +54,18 @@ const HomePage = () => (
           <LoginOutlined style={{ fontSize: '48px', color: '#faad14', marginBottom: '16px' }} />
           <Title level={4}>Присоединиться</Title>
           <Text>Создайте аккаунт за 2 минуты</Text>
+          <div style={{ marginTop: '16px' }}>
+            <Link to="/register">
+              <Button type="primary" style={{ background: '#faad14', borderColor: '#faad14' }}>
+                Регистрация
+              </Button>
+            </Link>
+          </div>
         </Card>
       </Col>
     </Row>
   </div>
 );
-
-// Страница товаров
-const ProductsPage = () => (
-  <div>
-    <Title level={1}>🛍️ Каталог товаров</Title>
-    <Text type="secondary" style={{ fontSize: '16px', display: 'block', marginBottom: '24px' }}>
-      Выберите товары из нашего каталога
-    </Text>
-    <Card>
-      <Text>Товары будут здесь после подключения к API</Text>
-    </Card>
-  </div>
-);
-
-// Страница профиля
-const ProfilePage = () => {
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    const userData = authService.getStoredUser();
-    setUser(userData);
-  }, []);
-
-  if (!user) {
-    return (
-      <div>
-        <Title level={1}>👤 Профиль пользователя</Title>
-        <Card>
-          <Text>Для просмотра профиля необходимо авторизоваться</Text>
-          <div style={{ marginTop: '16px' }}>
-            <Link to="/login">
-              <Button type="primary">Войти в систему</Button>
-            </Link>
-          </div>
-        </Card>
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <Title level={1}>👤 Профиль пользователя</Title>
-      <Card title={`Добро пожаловать, ${user.first_name || user.email}!`}>
-        <p><strong>Email:</strong> {user.email}</p>
-        <p><strong>Имя:</strong> {user.first_name || 'Не указано'}</p>
-        <p><strong>Фамилия:</strong> {user.last_name || 'Не указано'}</p>
-        <p><strong>Роль:</strong> {user.role}</p>
-        <p><strong>Статус:</strong> {user.is_active ? 'Активен' : 'Неактивен'}</p>
-      </Card>
-    </div>
-  );
-};
 
 // Компонент навигации с поддержкой авторизации
 const Navigation = () => {
