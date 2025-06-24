@@ -1,4 +1,4 @@
-// src/pages/Profile/ProfilePage.jsx
+// src/pages/Profile/ProfilePage.jsx - ИСПРАВЛЕННАЯ ВЕРСИЯ
 import { useState, useEffect } from 'react';
 import { 
   Card, Typography, Row, Col, Avatar, Tag, Button, Statistic, 
@@ -14,6 +14,7 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import { authService } from '../../services/authService';
 import { productsService } from '../../services/productsService';
+// ИСПРАВЛЕННЫЙ ИМПОРТ
 import ProductForm from '../../components/Product/ProductForm';
 
 const { Title, Text, Paragraph } = Typography;
@@ -30,17 +31,19 @@ const ProfilePage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    loadUserData();
+    checkAuthAndLoadData();
   }, []);
 
-  const loadUserData = async () => {
+  const checkAuthAndLoadData = async () => {
     try {
-      const userData = authService.getStoredUser();
-      if (!userData) {
+      // Проверяем авторизацию
+      if (!authService.isAuthenticated()) {
         navigate('/login');
         return;
       }
 
+      // Получаем актуальные данные пользователя с сервера
+      const userData = await authService.getCurrentUser();
       setUser(userData);
 
       // Загружаем дополнительные данные для бизнес-пользователей
@@ -52,7 +55,12 @@ const ProfilePage = () => {
       }
     } catch (error) {
       console.error('Ошибка загрузки данных:', error);
-      message.error('Ошибка загрузки профиля');
+      if (error.detail === 'Could not validate credentials') {
+        authService.logout();
+        navigate('/login');
+      } else {
+        message.error('Ошибка загрузки профиля');
+      }
     } finally {
       setLoading(false);
     }
@@ -64,6 +72,7 @@ const ProfilePage = () => {
       setMyProducts(products);
     } catch (error) {
       console.error('Ошибка загрузки товаров:', error);
+      message.error('Ошибка загрузки товаров');
     }
   };
 
@@ -73,6 +82,7 @@ const ProfilePage = () => {
       setProductsStats(stats);
     } catch (error) {
       console.error('Ошибка загрузки статистики:', error);
+      message.error('Ошибка загрузки статистики');
     }
   };
 
@@ -95,6 +105,7 @@ const ProfilePage = () => {
       await loadMyProducts();
       await loadProductsStats();
     } catch (error) {
+      console.error('Ошибка выполнения операции:', error);
       message.error('Ошибка выполнения операции');
     }
   };
@@ -252,6 +263,14 @@ const ProfilePage = () => {
       ),
     },
   ];
+
+  if (loading) {
+    return (
+      <div style={{ textAlign: 'center', padding: '100px 0' }}>
+        <Title level={4}>Загрузка профиля...</Title>
+      </div>
+    );
+  }
 
   if (!user) {
     return (

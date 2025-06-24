@@ -1,4 +1,4 @@
-// src/components/Product/ProductForm.jsx
+// frontend/src/components/Product/ProductForm.jsx
 import { useState, useEffect } from 'react';
 import { 
   Modal, Form, Input, InputNumber, Select, Upload, 
