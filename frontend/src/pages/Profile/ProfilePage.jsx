@@ -47,7 +47,7 @@ const ProfilePage = () => {
       setUser(userData);
 
       // Загружаем дополнительные данные для бизнес-пользователей
-      if (userData.role === 'business' || userData.role === 'admin') {
+      if (userData.role === 'seller' || userData.role === 'admin') {
         await Promise.all([
           loadMyProducts(),
           loadProductsStats()
@@ -293,7 +293,7 @@ const ProfilePage = () => {
     switch (role) {
       case 'admin':
         return { icon: <StarOutlined />, color: '#faad14', text: 'Администратор' };
-      case 'business':
+      case 'seller':
         return { icon: <ShopOutlined />, color: '#52c41a', text: 'Бизнес-аккаунт' };
       default:
         return { icon: <UserOutlined />, color: '#1890ff', text: 'Пользователь' };
@@ -334,7 +334,7 @@ const ProfilePage = () => {
                 {user.email}
               </Text>
               <Text type="secondary">
-                Статус: {user.is_active ? 
+                Статус: {user.status ? 
                   <Tag color="green">Активен</Tag> : 
                   <Tag color="red">Заблокирован</Tag>
                 }
@@ -386,7 +386,7 @@ const ProfilePage = () => {
                         />
                       )}
                       
-                      {(user.role === 'business' || user.role === 'admin') && (
+                      {(user.role === 'seller' || user.role === 'admin') && (
                         <Button 
                           type="primary" 
                           icon={<PlusOutlined />} 
@@ -407,8 +407,8 @@ const ProfilePage = () => {
             )
           },
           
-          // Мои товары - только для business и admin
-          ...(user.role === 'business' || user.role === 'admin' ? [{
+          // Мои товары - только для seller и admin
+          ...(user.role === 'seller' || user.role === 'admin' ? [{
             key: 'products',
             label: 'Мои товары',
             children: (

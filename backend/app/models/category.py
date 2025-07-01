@@ -61,7 +61,7 @@ class Category(Base):
     @property
     def products_count(self):
         """Количество активных товаров в категории"""
-        return len([p for p in self.products if p.is_published])
+        return len([p for p in self.products if p.status == "active"])
     
     @property
     def total_products_count(self):
@@ -71,8 +71,9 @@ class Category(Base):
             count += child.total_products_count
         return count
     
-    def get_full_path(self):
-        """Получить полный путь категории"""
+    @property
+    def full_path(self):
+        """Получить полный путь категории как свойство"""
         path = [self.name]
         current = self.parent
         while current:
@@ -80,48 +81,14 @@ class Category(Base):
             current = current.parent
         return " > ".join(path)
     
+    def get_full_path(self):
+        """Получить полный путь категории как метод"""
+        return self.full_path
+    
     def get_all_children(self):
-        """Получить все дочерние категории (рекурсивно)"""
+        """Получить все дочерние категории рекурсивно"""
         children = []
         for child in self.children:
             children.append(child)
             children.extend(child.get_all_children())
         return children
-    
-    def get_breadcrumbs(self):
-        """Получить хлебные крошки"""
-        breadcrumbs = []
-        current = self
-        while current:
-            breadcrumbs.insert(0, {
-                'id': current.id,
-                'name': current.name,
-                'slug': current.slug
-            })
-            current = current.parent
-        return breadcrumbs
-    
-    def get_root_category(self):
-        """Получить корневую категорию"""
-        current = self
-        while current.parent:
-            current = current.parent
-        return current
-    
-    def get_siblings(self):
-        """Получить категории того же уровня"""
-        if self.parent:
-            return [c for c in self.parent.children if c.id != self.id]
-        else:
-            # Для корневых категорий - другие корневые
-            from sqlalchemy.orm import object_session
-            session = object_session(self)
-            return session.query(Category).filter(
-                Category.parent_id.is_(None),
-                Category.id != self.id,
-                Category.is_active == True
-            ).all()
-    
-    def can_be_deleted(self):
-        """Может ли категория быть удалена"""
-        return not self.has_children and self.products_count == 0

@@ -1,10 +1,10 @@
-# app/api/v1/categories.py
+# app/api/v1/categories.py - добавить в начало файла
 from typing import Any, List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, joinedload
 
 from app.database import get_db
-from app.models import Category, User
+from app.models import Category, User  # Добавить User
 from app.schemas import CategoryCreate, CategoryUpdate, CategoryResponse, CategoryTree
 from app.core.auth_dependencies import get_admin_user
 

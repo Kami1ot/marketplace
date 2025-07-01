@@ -1,4 +1,4 @@
-# app/schemas/category.py
+# app/schemas/category.py - обновленная версия
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
@@ -47,62 +47,45 @@ class CategoryResponse(CategoryBase):
     has_children: bool
     level: int
     products_count: int
-    total_products_count: int
+    # Добавляем full_path
     full_path: str
     
     class Config:
         from_attributes = True
 
 class CategorySimple(BaseModel):
-    """Упрощенная схема категории для вложенных ответов"""
+    """Упрощенная схема категории"""
     id: int
     name: str
     slug: str
-    image_url: Optional[str] = None
     icon_url: Optional[str] = None
-    is_active: bool
     
     class Config:
         from_attributes = True
 
 class CategoryWithChildren(CategoryResponse):
-    """Категория с дочерними категориями"""
-    children: List['CategorySimple'] = []
-    
-    class Config:
-        from_attributes = True
-
-class CategoryWithParent(CategoryResponse):
-    """Категория с родительской категорией"""
-    parent: Optional[CategorySimple] = None
-    
-    class Config:
-        from_attributes = True
-
-class CategoryFull(CategoryResponse):
-    """Полная информация о категории"""
-    parent: Optional[CategorySimple] = None
+    """Категория с подкатегориями"""
     children: List[CategorySimple] = []
     
     class Config:
         from_attributes = True
 
-class CategoryTree(BaseModel):
+class CategoryWithProducts(CategoryResponse):
+    """Категория с количеством товаров"""
+    total_products_count: int
+    
+    class Config:
+        from_attributes = True
+
+class CategoryTree(CategoryResponse):
     """Дерево категорий"""
-    id: int
-    name: str
-    slug: str
-    image_url: Optional[str] = None
-    icon_url: Optional[str] = None
-    is_active: bool
-    products_count: int
     children: List['CategoryTree'] = []
     
     class Config:
         from_attributes = True
 
 class CategoryList(BaseModel):
-    """Схема для списка категорий с пагинацией"""
+    """Список категорий с пагинацией"""
     categories: List[CategoryResponse]
     total: int
     page: int
@@ -110,59 +93,42 @@ class CategoryList(BaseModel):
     pages: int
 
 class CategoryFilter(BaseModel):
-    """Схема для фильтрации категорий"""
-    parent_id: Optional[int] = None
+    """Фильтр категорий"""
     is_active: Optional[bool] = None
-    is_root: Optional[bool] = None  # Только корневые категории
-    has_children: Optional[bool] = None  # Только категории с детьми
-    search: Optional[str] = None  # Поиск по названию
+    parent_id: Optional[int] = None
+    has_products: Optional[bool] = None
+    search: Optional[str] = None
+
+class CategorySort(str):
+    """Сортировка категорий"""
+    NAME_ASC = "name_asc"
+    NAME_DESC = "name_desc"
+    SORT_ORDER = "sort_order"
+    PRODUCTS_COUNT = "products_count"
 
 class CategoryStats(BaseModel):
     """Статистика категории"""
     id: int
     name: str
     products_count: int
-    total_products_count: int
-    children_count: int
-    level: int
-    is_popular: bool  # Есть ли товары в наличии
+    active_products_count: int
+    subcategories_count: int
     
     class Config:
         from_attributes = True
 
-class CategoryBreadcrumb(BaseModel):
-    """Хлебные крошки для категории"""
+class CategoryAnalytics(BaseModel):
+    """Аналитика категории"""
     id: int
     name: str
-    slug: str
+    views_count: int
+    conversion_rate: float
+    average_product_price: float
+    top_selling_products: List[int]
     
     class Config:
         from_attributes = True
 
-class CategoryBreadcrumbs(BaseModel):
-    """Список хлебных крошек"""
-    breadcrumbs: List[CategoryBreadcrumb]
-    current: CategoryBreadcrumb
-
-class CategoryMove(BaseModel):
-    """Схема для перемещения категории"""
-    new_parent_id: Optional[int] = None
-    new_sort_order: Optional[int] = None
-
-class CategoryBulkUpdate(BaseModel):
-    """Схема для массового обновления категорий"""
-    category_ids: List[int]
-    is_active: Optional[bool] = None
-    sort_order: Optional[int] = None
-
-class CategoryImport(BaseModel):
-    """Схема для импорта категорий"""
-    name: str
-    parent_name: Optional[str] = None  # Название родительской категории
-    description: Optional[str] = None
-    image_url: Optional[str] = None
-    is_active: bool = True
-
-# Forward reference для избежания циклических импортов
+# Обновляем forward references
 CategoryWithChildren.model_rebuild()
 CategoryTree.model_rebuild()
