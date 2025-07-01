@@ -1,4 +1,4 @@
-# app/models/user.py
+# app/models/user.py - исправленная версия начала файла
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Enum, Date, Text, ForeignKey
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
