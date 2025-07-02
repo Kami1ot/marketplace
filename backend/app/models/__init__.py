@@ -17,6 +17,11 @@ from app.models.conversation import (
 from app.models.notification import Notification, NotificationType
 from app.models.discount import DiscountCode, DiscountType, DiscountUsage
 from app.models.analytics import ProductView
+from app.models.attribute import (
+    AttributeDefinition, AttributeValue, 
+    CategoryAttribute, ProductAttribute,
+    AttributeType
+)
 
 # Экспорт всех моделей
 __all__ = [
@@ -56,4 +61,7 @@ __all__ = [
     
     # Analytics models
     "ProductView",
+    
+    # Attribute models (NEW)
+    "AttributeDefinition", "AttributeValue", "CategoryAttribute", "ProductAttribute", "AttributeType",
 ]

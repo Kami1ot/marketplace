@@ -1,4 +1,4 @@
-# app/models/product.py
+# app/models/product.py - обновите существующие классы
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey, DECIMAL, JSON, Enum
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
@@ -78,6 +78,12 @@ class Product(Base):
     reviews = relationship("Review", back_populates="product", cascade="all, delete-orphan")
     views = relationship("ProductView", back_populates="product", cascade="all, delete-orphan")
     
+    # ДОБАВЛЯЕМ отношение к атрибутам
+    product_attributes = relationship("ProductAttribute", 
+                                     foreign_keys="ProductAttribute.product_id",
+                                     back_populates="product", 
+                                     cascade="all, delete-orphan")
+    
     def __repr__(self):
         return f"<Product(id={self.id}, name='{self.name}', price={self.price}, status='{self.status}')>"
     
@@ -85,39 +91,21 @@ class Product(Base):
     def is_published(self):
         """Проверка, опубликован ли товар"""
         return (self.status == ProductStatus.ACTIVE and 
-                self.visibility == ProductVisibility.PUBLISHED and 
-                self.published_at is not None)
+                self.visibility == ProductVisibility.PUBLISHED)
     
     @property
     def is_in_stock(self):
-        """Проверка наличия на складе"""
+        """Проверка наличия товара на складе"""
         if not self.track_inventory:
             return True
-        if self.variants:
-            # Если есть варианты, проверяем их запасы
-            return any(variant.is_in_stock for variant in self.variants if variant.is_active)
         return self.stock_quantity > 0 or self.allow_backorder
     
     @property
     def is_low_stock(self):
-        """Проверка низкого остатка"""
+        """Проверка низкого остатка товара"""
         if not self.track_inventory:
             return False
-        if self.variants:
-            return all(variant.stock_quantity <= variant.product.low_stock_threshold 
-                      for variant in self.variants if variant.is_active)
         return self.stock_quantity <= self.low_stock_threshold
-    
-    @property
-    def main_image(self):
-        """Главное изображение товара"""
-        main_images = [img for img in self.images if img.is_main and not img.variant_id]
-        return main_images[0] if main_images else None
-    
-    @property
-    def all_images(self):
-        """Все изображения товара (основные + варианты)"""
-        return [img for img in self.images if not img.variant_id]
     
     @property
     def discount_percentage(self):
@@ -128,54 +116,24 @@ class Product(Base):
     
     @property
     def effective_price(self):
-        """Эффективная цена (минимальная среди вариантов или основная)"""
-        if self.variants:
-            variant_prices = [v.effective_price for v in self.variants if v.is_active]
-            return min(variant_prices) if variant_prices else self.price
+        """Эффективная цена (для совместимости с вариантами)"""
         return self.price
     
     @property
-    def price_range(self):
-        """Диапазон цен для товара с вариантами"""
-        if not self.variants:
-            return None
+    def grouped_attributes(self):
+        """Атрибуты сгруппированные по типу"""
+        general = []
+        variant_specific = []
         
-        active_variants = [v for v in self.variants if v.is_active]
-        if not active_variants:
-            return None
-            
-        prices = [v.effective_price for v in active_variants]
-        min_price, max_price = min(prices), max(prices)
-        
-        if min_price == max_price:
-            return None
-        return {"min": min_price, "max": max_price}
-    
-    @property
-    def total_stock(self):
-        """Общий запас товара"""
-        if self.variants:
-            return sum(v.stock_quantity for v in self.variants if v.is_active)
-        return self.stock_quantity
-    
-    @property
-    def reviews_summary(self):
-        """Сводка по отзывам"""
-        approved_reviews = [r for r in self.reviews if r.status == "approved"]
-        if not approved_reviews:
-            return {"count": 0, "average": 0, "ratings": {}}
-        
-        total = len(approved_reviews)
-        average = sum(r.rating for r in approved_reviews) / total
-        
-        ratings = {}
-        for i in range(1, 6):
-            ratings[str(i)] = len([r for r in approved_reviews if r.rating == i])
+        for attr in self.product_attributes:
+            if attr.variant_id is None:
+                general.append(attr)
+            else:
+                variant_specific.append(attr)
         
         return {
-            "count": total,
-            "average": round(average, 1),
-            "ratings": ratings
+            "general": general,
+            "variant_specific": variant_specific
         }
 
 
@@ -186,19 +144,22 @@ class ProductVariant(Base):
     id = Column(Integer, primary_key=True, index=True)
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False, index=True)
     
-    # Идентификация варианта
+    # Идентификация
+    name = Column(String(200), nullable=True)  # "Красный XL"
     sku = Column(String(100), unique=True, nullable=False, index=True)
-    name = Column(String(200), nullable=True)  # "Красный XL", "128GB"
     
     # Цены (могут отличаться от основного товара)
-    price = Column(DECIMAL(15, 2), nullable=True)
+    price = Column(DECIMAL(15, 2), nullable=True)  # Если None, используется цена товара
     compare_price = Column(DECIMAL(15, 2), nullable=True)
     
-    # Запасы
+    # Склад
     stock_quantity = Column(Integer, default=0, nullable=False)
-    weight = Column(DECIMAL(8, 3), nullable=True)
     
-    # Характеристики варианта
+    # Физические характеристики варианта
+    weight = Column(DECIMAL(8, 3), nullable=True)
+    dimensions = Column(JSON, nullable=True)
+    
+    # Атрибуты варианта
     attributes = Column(JSON, nullable=True)  # {"color": "red", "size": "XL"}
     
     # Главное изображение варианта
@@ -218,6 +179,12 @@ class ProductVariant(Base):
     wishlist_items = relationship("WishlistItem", back_populates="variant")
     order_items = relationship("OrderItem", back_populates="variant")
     images = relationship("ProductImage", back_populates="variant", cascade="all, delete-orphan")
+    
+    # ДОБАВЛЯЕМ отношение к атрибутам
+    product_attributes = relationship("ProductAttribute", 
+                                     foreign_keys="ProductAttribute.variant_id",
+                                     back_populates="variant", 
+                                     cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<ProductVariant(id={self.id}, product_id={self.product_id}, name='{self.name}', sku='{self.sku}')>"
@@ -261,6 +228,11 @@ class ProductVariant(Base):
         if compare_price and compare_price > current_price:
             return round(((compare_price - current_price) / compare_price) * 100)
         return 0
+    
+    @property
+    def variant_attributes(self):
+        """Атрибуты варианта"""
+        return [attr for attr in self.product_attributes if attr.variant_id == self.id]
 
 
 class ProductImage(Base):

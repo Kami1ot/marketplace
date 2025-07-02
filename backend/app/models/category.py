@@ -34,6 +34,8 @@ class Category(Base):
     parent = relationship("Category", remote_side=[id], back_populates="children")
     children = relationship("Category", back_populates="parent", cascade="all, delete-orphan")
     products = relationship("Product", back_populates="category")
+    category_attributes = relationship("CategoryAttribute", back_populates="category", cascade="all, delete-orphan")
+
     
     def __repr__(self):
         return f"<Category(id={self.id}, name='{self.name}', parent_id={self.parent_id})>"
@@ -80,6 +82,16 @@ class Category(Base):
             path.insert(0, current.name)
             current = current.parent
         return " > ".join(path)
+    
+    @property
+    def required_attributes(self):
+        """Обязательные атрибуты категории"""
+        return [ca.attribute for ca in self.category_attributes if ca.is_required]
+    
+    @property
+    def variant_attributes(self):
+        """Атрибуты, создающие варианты"""
+        return [ca.attribute for ca in self.category_attributes if ca.is_variant]
     
     def get_full_path(self):
         """Получить полный путь категории как метод"""

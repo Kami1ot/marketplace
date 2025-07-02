@@ -12,7 +12,7 @@ from app.config import settings
 from app.models import *
 
 # Импортируем роутеры
-from app.api.v1 import auth, users, products, stores, categories, cart
+from app.api.v1 import auth, users, products, stores, categories, cart, attributes
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -55,6 +55,7 @@ app.include_router(products.router, prefix="/api/v1/products", tags=["📦 Produ
 app.include_router(stores.router, prefix="/api/v1/stores", tags=["🏪 Stores"])
 app.include_router(categories.router, prefix="/api/v1/categories", tags=["📁 Categories"])
 app.include_router(cart.router, prefix="/api/v1/cart", tags=["🛒 Cart"])
+app.include_router(attributes.router, prefix="/api/v1/attributes", tags=["📋 Attributes"])
 
 # Главная страница
 @app.get("/", tags=["🏠 General"])

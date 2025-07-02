@@ -22,8 +22,8 @@ from app.schemas.product import (
 # Category schemas
 from app.schemas.category import (
     CategoryBase, CategoryCreate, CategoryUpdate, CategoryResponse, CategorySimple,
-    CategoryWithChildren, CategoryTree, CategoryList,
-    CategoryFilter, CategoryStats
+    CategoryWithChildren, CategoryWithProducts, CategoryTree, CategoryList,
+    CategoryFilter, CategorySort, CategoryStats, CategoryAnalytics
 )
 
 # Brand schemas
@@ -37,7 +37,9 @@ from app.schemas.brand import (
 # Store schemas
 from app.schemas.store import (
     StoreBase, StoreCreate, StoreUpdate, StoreResponse, StoreSimple,
-    StoreWithOwner, StoreWithStats, StoreFull, StoreList, StoreFilter, StoreSort,
+    StoreWithOwner, StoreWithProducts, StoreWithStats, StoreFull,
+    StoreStatsBase, StoreStatsResponse,
+    StoreList, StoreFilter, StoreSort,
     StoreStatus, VerificationStatus, BusinessType
 )
 
@@ -126,6 +128,16 @@ from app.schemas.analytics import (
     ViewerType, BrowserType, DeviceType
 )
 
+# Attribute schemas (NEW)
+from app.schemas.attribute import (
+    AttributeType,
+    AttributeDefinitionBase, AttributeDefinitionCreate, AttributeDefinitionUpdate, AttributeDefinitionResponse,
+    AttributeValueBase, AttributeValueCreate, AttributeValueUpdate, AttributeValueResponse,
+    CategoryAttributeBase, CategoryAttributeCreate, CategoryAttributeUpdate, CategoryAttributeResponse,
+    ProductAttributeBase, ProductAttributeCreate, ProductAttributeUpdate, ProductAttributeResponse,
+    CategoryWithAttributes, ProductWithAttributes
+)
+
 # Экспорт всех схем
 __all__ = [
     # User schemas
@@ -157,7 +169,8 @@ __all__ = [
     # Store schemas
     "StoreBase", "StoreCreate", "StoreUpdate", "StoreResponse", "StoreSimple",
     "StoreWithOwner", "StoreWithProducts", "StoreWithStats", "StoreFull",
-    "StoreStats", "StoreList", "StoreFilter", "StoreSort",
+    "StoreStatsBase", "StoreStatsResponse",
+    "StoreList", "StoreFilter", "StoreSort",
     "StoreStatus", "VerificationStatus", "BusinessType",
     
     # Order schemas
@@ -228,4 +241,12 @@ __all__ = [
     "DailyAnalytics", "HourlyAnalytics", "UserBehaviorAnalytics",
     "ProductAnalytics", "TrendingProduct", "SearchTrend",
     "ViewerType", "BrowserType", "DeviceType",
+    
+    # Attribute schemas (NEW)
+    "AttributeType",
+    "AttributeDefinitionBase", "AttributeDefinitionCreate", "AttributeDefinitionUpdate", "AttributeDefinitionResponse",
+    "AttributeValueBase", "AttributeValueCreate", "AttributeValueUpdate", "AttributeValueResponse",
+    "CategoryAttributeBase", "CategoryAttributeCreate", "CategoryAttributeUpdate", "CategoryAttributeResponse",
+    "ProductAttributeBase", "ProductAttributeCreate", "ProductAttributeUpdate", "ProductAttributeResponse",
+    "CategoryWithAttributes", "ProductWithAttributes",
 ]
